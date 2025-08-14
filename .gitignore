@@ -21,4 +21,8 @@ docs/_build/
 .settings/
 .venv/
 venv/
+<<<<<<< HEAD
 *.egg-info
+=======
+
+>>>>>>> vsajip/master
