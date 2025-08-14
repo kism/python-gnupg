@@ -1,0 +1,35 @@
+---
+name: Type Check (Mypy)
+
+on:
+  push:
+    branches: [master]
+    paths-ignore:
+      - "LICENSE.*"
+      - "README.*"
+      - ".github/ISSUE-TEMPLATE/**"
+      - "docs/**"
+      - ".hgignore"
+      - ".gitignore"
+      - ".github/workflows/merge-original.yml"
+
+jobs:
+  mypy:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install mypy
+        run: pip install mypy
+
+      - name: Run mypy
+        run: python3 -m mypy.stubtest gnupg

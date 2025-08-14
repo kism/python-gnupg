@@ -1,0 +1,45 @@
+name: Merge vsajip/master
+
+on:
+  schedule:
+    - cron: "5 4 * * *" # Run once a day
+  workflow_dispatch: # Allow manual triggering
+
+jobs:
+  merge-original:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+
+      - name: Configure git
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "actions@github.com"
+
+      - name: Commit and Push Changes
+        run: |
+          echo "> git remote add"
+          git remote add vsajip https://github.com/vsajip/python-gnupg.git
+          echo "> git fetch"
+          git fetch vsajip
+          echo "> git reset"
+          git merge vsajip/master --allow-unrelated-histories --no-edit || true
+          echo "> rm undesired workflow"
+          rm -f .github/workflows/python-package.yml # Don't need in my repo
+          mkdir -p gnupg
+          if [ -f gnupg.py ]; then
+            echo "> mv gnupg.py gnupg/__init__.py"
+            mv gnupg.py gnupg/__init__.py
+          fi
+          if ! git diff --quiet; then
+            echo "> git add"
+            git add .
+            echo "> git commit"
+            git commit -m "Rename gnupg.py → gnupg/__init__.py after upstream merge"
+            echo "> git push"
+            git push origin master --force
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
