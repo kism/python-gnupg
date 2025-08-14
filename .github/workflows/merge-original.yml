@@ -29,6 +29,7 @@ jobs:
           echo "> rm undesired workflow"
           rm -f .github/workflows/python-package.yml # Don't need in my repo
           mkdir -p gnupg
+          touch gnupg/py.typed
           if [ -f gnupg.py ]; then
             echo "> mv gnupg.py gnupg/__init__.py"
             mv gnupg.py gnupg/__init__.py
