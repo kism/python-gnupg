@@ -28,8 +28,13 @@ jobs:
 
           # Check if there are new commits in upstream
           UPSTREAM_COMMIT=$(git rev-parse vsajip/master)
-          if git merge-base --is-ancestor $UPSTREAM_COMMIT HEAD; then
-            echo "No new commits in upstream"
+          CURRENT_COMMIT=$(git rev-parse HEAD)
+
+          if [ "$UPSTREAM_COMMIT" = "$CURRENT_COMMIT" ]; then
+            echo "No new commits in upstream (same commit)"
+            echo "has-changes=false" >> $GITHUB_OUTPUT
+          elif git merge-base --is-ancestor HEAD vsajip/master; then
+            echo "No new commits in upstream (current branch is behind)"
             echo "has-changes=false" >> $GITHUB_OUTPUT
           else
             echo "New commits found in upstream"
