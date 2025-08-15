@@ -44,9 +44,10 @@ jobs:
               s/^py_modules = gnupg$/packages = gnupg\npackage_dir =\n    = ./
           }' setup.cfg
 
-      - name: Add *.egg-info to gitignore
+      - name: Add *.egg-info to gitignore, fix newlines
         run: |
           grep -qxF '*.egg-info' .gitignore || echo '*.egg-info' >> .gitignore
+          sed -i '/^$/d' .gitignore && printf '\n' >> .gitignore
 
       - name: Commit and Push Changes
         run: |
