@@ -22,5 +22,5 @@ docs/_build/
 .venv/
 venv/
 *.egg-info
-*.coverage
+.coverage
 
