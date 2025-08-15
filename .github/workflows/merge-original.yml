@@ -41,7 +41,7 @@ jobs:
       - name: Update setup.cfg
         run: |
           sed -i '/^py_modules = gnupg$/{
-              s/^py_modules = gnupg$/packages = gnupg\npackage_dir =\n    = ./
+              s/^py_modules = gnupg$/packages = gnupg\npackage_dir =\n    = .\n\n[options.package_data]\ngnupg = py.typed, *.pyi/
           }' setup.cfg
 
       - name: Add *.egg-info to gitignore, fix newlines
