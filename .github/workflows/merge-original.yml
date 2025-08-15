@@ -53,9 +53,13 @@ jobs:
         run: |
           echo "> git add"
           git add .
-          echo "> git commit"
-          git commit -m "Merge vsajip/master and rename gnupg.py → gnupg/__init__.py"
-          echo "> git push"
-          git push origin master --force
+          if git diff --staged --quiet; then
+            echo "No changes to commit, skipping push"
+          else
+            echo "> git commit"
+            git commit -m "Merge vsajip/master and rename gnupg.py → gnupg/__init__.py"
+            echo "> git push"
+            git push origin master --force
+          fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
