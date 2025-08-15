@@ -21,4 +21,5 @@ docs/_build/
 .settings/
 .venv/
 venv/
+*.egg-info
 
