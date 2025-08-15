@@ -18,22 +18,34 @@ jobs:
           git config --global user.name "github-actions"
           git config --global user.email "actions@github.com"
 
-      - name: Commit and Push Changes
+      - name: Merge remote
         run: |
           echo "> git remote add"
           git remote add vsajip https://github.com/vsajip/python-gnupg.git
           echo "> git fetch"
           git fetch vsajip
           echo "> git reset"
-          git merge vsajip/master --allow-unrelated-histories --no-edit || true
+          git merge vsajip/master --allow-unrelated-histories --strategy-option theirs --no-edit
           echo "> rm undesired workflow"
           rm -f .github/workflows/python-package.yml # Don't need in my repo
+
+      - name: Move to to module layout
+        run: |
           mkdir -p gnupg
           touch gnupg/py.typed
           if [ -f gnupg.py ]; then
             echo "> mv gnupg.py gnupg/__init__.py"
             mv gnupg.py gnupg/__init__.py
           fi
+
+      - name: Update setup.cfg
+        run: |
+          sed -i '/^py_modules = gnupg$/{
+              s/^py_modules = gnupg$/packages = gnupg\npackage_dir =\n    = ./
+          }' setup.cfg
+
+      - name: Commit and Push Changes
+        run: |
           if ! git diff --quiet; then
             echo "> git add"
             git add .
