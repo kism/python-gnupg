@@ -24,8 +24,8 @@ jobs:
           git remote add vsajip https://github.com/vsajip/python-gnupg.git
           echo "> git fetch"
           git fetch vsajip
-          echo "> git merge"
-          git merge vsajip/master --allow-unrelated-histories --strategy-option theirs --no-edit
+          echo "> git merge (no commit)"
+          git merge vsajip/master --allow-unrelated-histories --strategy-option theirs --no-commit --no-edit
           echo "> rm undesired workflow"
           rm -f .github/workflows/python-package.yml # Don't need in my repo
 
@@ -55,7 +55,7 @@ jobs:
             echo "> git add"
             git add .
             echo "> git commit"
-            git commit -m "Rename gnupg.py → gnupg/__init__.py after upstream merge"
+            git commit -m "Merge vsajip/master and rename gnupg.py → gnupg/__init__.py"
             echo "> git push"
             git push origin master --force
           fi
