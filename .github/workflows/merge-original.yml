@@ -18,7 +18,7 @@ jobs:
           git config --global user.name "github-actions"
           git config --global user.email "actions@github.com"
 
-      - name: Merge remote
+      - name: Merge remote vsajip/python-gnupg
         run: |
           echo "> git remote add"
           git remote add vsajip https://github.com/vsajip/python-gnupg.git
@@ -26,8 +26,9 @@ jobs:
           git fetch vsajip
           echo "> git merge (no commit)"
           git merge vsajip/master --allow-unrelated-histories --strategy-option theirs --no-commit --no-edit
-          echo "> rm undesired workflow"
-          rm -f .github/workflows/python-package.yml # Don't need in my repo
+
+      - name: Remove undesired workflow for this repo
+        run: rm -f .github/workflows/python-package.yml
 
       - name: Move to to module layout
         run: |
