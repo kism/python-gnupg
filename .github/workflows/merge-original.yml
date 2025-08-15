@@ -24,7 +24,7 @@ jobs:
           git remote add vsajip https://github.com/vsajip/python-gnupg.git
           echo "> git fetch"
           git fetch vsajip
-          echo "> git reset"
+          echo "> git merge"
           git merge vsajip/master --allow-unrelated-histories --strategy-option theirs --no-edit
           echo "> rm undesired workflow"
           rm -f .github/workflows/python-package.yml # Don't need in my repo
