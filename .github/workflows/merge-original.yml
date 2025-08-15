@@ -44,6 +44,10 @@ jobs:
               s/^py_modules = gnupg$/packages = gnupg\npackage_dir =\n    = ./
           }' setup.cfg
 
+      - name: Add *.egg-info to gitignore
+        run: |
+          grep -qxF '*.egg-info' .gitignore || echo '*.egg-info' >> .gitignore
+
       - name: Commit and Push Changes
         run: |
           if ! git diff --quiet; then
