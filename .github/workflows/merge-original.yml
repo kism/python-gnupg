@@ -48,6 +48,7 @@ jobs:
       - name: Add *.egg-info to gitignore, fix newlines
         run: |
           grep -qxF '*.egg-info' .gitignore || echo '*.egg-info' >> .gitignore
+          grep -qxF '.coverage' .gitignore || echo '.coverage' >> .gitignore
           sed -i '/^$/d' .gitignore && printf '\n' >> .gitignore
 
       - name: Commit and Push Changes
