@@ -3,7 +3,8 @@ name: Type Check (Mypy)
 
 on:
   push:
-    branches: [master]
+    branches:
+      - master
     paths-ignore:
       - "LICENSE.*"
       - "README.*"
