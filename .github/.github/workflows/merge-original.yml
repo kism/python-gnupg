@@ -1,0 +1,85 @@
+name: Merge vsajip/master
+
+on:
+  schedule:
+    - cron: "5 4 * * *" # Run once a day
+  workflow_dispatch: # Allow manual triggering
+
+jobs:
+  merge-original:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v6
+
+      - name: Configure git
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "actions@github.com"
+
+      - name: Fetch upstream vsajip/python-gnupg
+        run: |
+          git remote add vsajip https://github.com/vsajip/python-gnupg.git
+          git fetch vsajip
+
+      - name: Check if upstream has new commits
+        id: check
+        run: |
+          if git merge-base --is-ancestor vsajip/master HEAD; then
+            echo "up_to_date=true" >> $GITHUB_OUTPUT
+            echo "Upstream has no new commits, nothing to do."
+          else
+            echo "up_to_date=false" >> $GITHUB_OUTPUT
+            echo "Upstream has new commits, will update."
+          fi
+
+      - name: Save fork-specific files
+        if: steps.check.outputs.up_to_date == 'false'
+        run: |
+          mkdir -p /tmp/fork-files/gnupg
+          cp -r .github/ /tmp/fork-files/
+          cp gnupg/__init__.pyi /tmp/fork-files/gnupg/
+          cp gnupg/py.typed /tmp/fork-files/gnupg/
+          cp README_TYPED.rst /tmp/fork-files/ || true
+
+      - name: Reset to upstream
+        if: steps.check.outputs.up_to_date == 'false'
+        run: git reset --hard vsajip/master
+
+      - name: Restore fork-specific files and apply transformations
+        if: steps.check.outputs.up_to_date == 'false'
+        run: |
+          # Restore fork-specific files
+          mkdir -p gnupg
+          cp -r /tmp/fork-files/.github/ .github/
+          cp /tmp/fork-files/gnupg/__init__.pyi gnupg/
+          cp /tmp/fork-files/gnupg/py.typed gnupg/
+          cp /tmp/fork-files/README_TYPED.rst . || true
+
+          # Remove undesired upstream workflow
+          rm -f .github/workflows/python-package.yml
+
+          # Rename gnupg.py to gnupg/__init__.py (package layout)
+          if [ -f gnupg.py ]; then
+            mv gnupg.py gnupg/__init__.py
+          fi
+
+          # Update setup.cfg: py_modules → packages with package_data
+          sed -i '/^py_modules = gnupg$/{
+              s/^py_modules = gnupg$/packages = gnupg\npackage_dir =\n    = .\n\n[options.package_data]\ngnupg = py.typed, *.pyi/
+          }' setup.cfg
+
+          # Update .gitignore
+          grep -qxF '*.egg-info' .gitignore || echo '*.egg-info' >> .gitignore
+          grep -qxF '.coverage' .gitignore || echo '.coverage' >> .gitignore
+          sed -i '/^$/d' .gitignore && printf '\n' >> .gitignore
+
+      - name: Commit and Push Changes
+        if: steps.check.outputs.up_to_date == 'false'
+        run: |
+          git add .
+          git commit -m "Merge vsajip/master and rename gnupg.py → gnupg/__init__.py"
+          git push origin master --force
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
