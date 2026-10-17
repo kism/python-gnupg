@@ -1,0 +1,86 @@
+name: Merge vsajip/master
+
+on:
+  schedule:
+    - cron: "5 4 * * *" # Run once a day
+  workflow_dispatch: # Allow manual triggering
+
+jobs:
+  merge-original:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v6
+        with:
+          # PAT so the bot's push triggers the mypy workflow
+          token: ${{ secrets.PAT_TOKEN }}
+
+      - name: Configure git
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "actions@github.com"
+
+      - name: Fetch upstream vsajip/python-gnupg
+        run: |
+          git remote add vsajip https://github.com/vsajip/python-gnupg.git
+          git fetch vsajip --tags
+
+      - name: Check if upstream has new commits
+        id: check
+        run: |
+          if git merge-base --is-ancestor vsajip/master HEAD; then
+            echo "up_to_date=true" >> $GITHUB_OUTPUT
+            echo "Upstream has no new commits, nothing to do."
+          else
+            echo "up_to_date=false" >> $GITHUB_OUTPUT
+            echo "Upstream has new commits, will update."
+          fi
+
+      - name: Save fork-specific files
+        run: |
+          mkdir -p /tmp/fork-files/gnupg
+          cp -r .github/ /tmp/fork-files/
+          cp gnupg/__init__.pyi /tmp/fork-files/gnupg/
+          cp gnupg/py.typed /tmp/fork-files/gnupg/
+          cp README_TYPED.rst /tmp/fork-files/ || true
+
+      - name: Reset to upstream
+        if: steps.check.outputs.up_to_date == 'false'
+        run: git reset --hard vsajip/master
+
+      - name: Restore fork-specific files and apply transformations
+        if: steps.check.outputs.up_to_date == 'false'
+        run: /tmp/fork-files/.github/scripts/apply-fork.sh
+
+      - name: Commit and Push Changes
+        if: steps.check.outputs.up_to_date == 'false'
+        run: |
+          git add .
+          git commit -m "Merge vsajip/master and rename gnupg.py → gnupg/__init__.py"
+          git push origin master --force
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.x"
+
+      - name: Tag latest upstream release with stubs
+        # Upstream tags lack the stubs, so re-tag upstream code + fork changes.
+        # ponytail: latest tag only; older releases aren't backfilled since
+        # the current stubs may not match their API.
+        run: |
+          tag=$(git describe --tags --abbrev=0 vsajip/master)
+          if git ls-remote --exit-code --tags origin "refs/tags/$tag" > /dev/null; then
+            echo "$tag already tagged on fork, nothing to do."
+            exit 0
+          fi
+          git checkout --detach "$tag"
+          /tmp/fork-files/.github/scripts/apply-fork.sh
+          pip install mypy
+          mypy gnupg
+          python -m mypy.stubtest gnupg
+          git add .
+          git commit -m "Typed release $tag"
+          git tag -f "$tag"
+          git push origin "refs/tags/$tag"
